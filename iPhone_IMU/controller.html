@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head><meta name="viewport" content="width=device-width">
@@ -14,7 +15,10 @@
     function start() {
       document.getElementById('status').innerText = "Connecting...";
   try {
-    ws = new WebSocket("wss://10.90.221.253:8765");
+
+    // Replace YOUR_LOCAL_IP with your PC's local IP (run ipconfig to find it)
+
+    ws = new WebSocket("wss://YOUR_LOCAL_IP:8765");    
     ws.onopen = () => document.getElementById('status').innerText = "✅ Connected!";
     ws.onerror = (e) => document.getElementById('status').innerText = "❌ Error: " + JSON.stringify(e);
     ws.onclose = (e) => document.getElementById('status').innerText = "❌ Closed: code=" + e.code + " reason=" + e.reason;
