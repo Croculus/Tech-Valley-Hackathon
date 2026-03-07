@@ -19,14 +19,14 @@ async def handler(ws):
         pitch = data.get('beta', 0)
         roll  = data.get('gamma', 0)
         T = 12
-        if pitch > T:   press('w')
-        else:           release('w')
-        if pitch < -T:  press('s')
-        else:           release('s')
-        if roll < -T:   press('a')
-        else:           release('a')
-        if roll > T:    press('d')
-        else:           release('d')
+        if pitch > T:   press("down")
+        else:           release("down")
+        if pitch < -T:  press("up")
+        else:           release("up")
+        if roll < -T:   press("left")
+        else:           release("left")
+        if roll > T:    press("right")
+        else:           release("right")
 
 async def dummy_http(request):
     return web.Response(text="OK - cert trusted!")
