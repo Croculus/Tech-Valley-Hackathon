@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width">
+<style>body{font-family:sans-serif;text-align:center;padding:40px;background:#111;color:#0f0;}</style>
+</head>
+<body>
+  <h2>🎮 Head Tilt Controller</h2>
+  <p id="status">Tap to connect</p>
+  <p id="data">Tilt: --</p>
+  <button onclick="start()" style="font-size:24px;padding:20px 40px">START</button>
+
+  <script>
+    let ws;
+    function start() {
+      document.getElementById('status').innerText = "Connecting...";
+  try {
+    ws = new WebSocket("wss://10.90.221.253:8765");
+    ws.onopen = () => document.getElementById('status').innerText = "✅ Connected!";
+    ws.onerror = (e) => document.getElementById('status').innerText = "❌ Error: " + JSON.stringify(e);
+    ws.onclose = (e) => document.getElementById('status').innerText = "❌ Closed: code=" + e.code + " reason=" + e.reason;
+  } catch(e) {
+    document.getElementById('status').innerText = "❌ Exception: " + e.message;
+  }
+
+      // iOS requires permission request
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(r => {
+          if (r === 'granted') listenToTilt();
+        });
+      } else {
+        listenToTilt();
+      }
+    }
+
+    function listenToTilt() {
+      window.addEventListener('deviceorientation', (e) => {
+        if (ws && ws.readyState === 1) {
+          ws.send(JSON.stringify({ beta: e.beta, gamma: e.gamma }));
+          document.getElementById('data').innerText =
+            `Pitch: ${e.beta?.toFixed(1)}° Roll: ${e.gamma?.toFixed(1)}°`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+
+
+
