@@ -14,7 +14,6 @@
 
     h2 { font-size: 20px; margin-bottom: 4px; }
     #status { font-size: 13px; color: #888; margin-bottom: 16px; }
-    #data   { font-size: 13px; color: #0af; margin-bottom: 20px; min-height: 20px; }
 
     .btn {
       display: block;
@@ -28,14 +27,13 @@
       font-weight: bold;
     }
 
-    #start-btn {
+    #connect-btn {
       background: #0f0;
       color: #111;
       font-size: 20px;
       padding: 20px;
     }
 
-    /* REMAP SECTION */
     .section-title {
       font-size: 11px;
       letter-spacing: 3px;
@@ -44,6 +42,7 @@
       margin: 24px 0 12px;
     }
 
+    /* DPAD */
     .dpad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -82,7 +81,7 @@
       font-family: monospace;
     }
 
-    /* KEY PICKER MODAL */
+    /* MODAL */
     .modal {
       display: none;
       position: fixed;
@@ -144,7 +143,7 @@
       margin-top: 4px;
     }
 
-    /* THRESHOLD */
+    /* SLIDER */
     .slider-row {
       display: flex;
       align-items: center;
@@ -173,21 +172,21 @@
       text-align: right;
       flex-shrink: 0;
     }
+
+    #send-status {
+      font-size: 11px;
+      color: #555;
+      margin-top: 8px;
+      min-height: 16px;
+    }
   </style>
-  <script>
-  alert("test");
-  document.onerror = (e) => {
-    alert("Error: " + e.message);
-  };
-</script>
 </head>
 <body>
 
-  <h2>🎮 Head Tilt Controller</h2>
-  <p id="status">Tap START to connect</p>
-  <p id="data">--</p>
+  <h2>⚙️ Tilt Controller — Config</h2>
+  <p id="status">Tap CONNECT to begin</p>
 
-  <button id="start-btn" class="btn" onclick="start()">START</button>
+  <button id="connect-btn" class="btn" onclick="connect()">CONNECT</button>
 
   <!-- REMAP -->
   <div class="section-title">Remap Directions</div>
@@ -213,7 +212,7 @@
     <div class="dpad-empty"></div>
   </div>
 
-  <!-- THRESHOLD SLIDER -->
+  <!-- THRESHOLD -->
   <div class="section-title">Sensitivity</div>
   <div class="slider-row">
     <label>Tilt Angle</label>
@@ -221,6 +220,8 @@
       oninput="updateThreshold(this.value)">
     <span class="slider-val" id="thresh-val">12°</span>
   </div>
+
+  <p id="send-status"></p>
 
   <!-- REMAP MODAL -->
   <div class="modal" id="remap-modal">
@@ -231,7 +232,7 @@
   </div>
 
 <script>
-  // ── State ──────────────────────────────────────────────────────────────────
+  const WS_URL = "wss://10.90.111.57:8765";
   let ws;
   const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
   let threshold = 12;
@@ -251,13 +252,13 @@
   };
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
-  function start() {
+  function connect() {
     document.getElementById('status').innerText = "Connecting...";
     try {
-      ws = new WebSocket("wss://10.90.111.57:8765");
+      ws = new WebSocket(WS_URL);
       ws.onopen  = () => {
         document.getElementById('status').innerText = "✅ Connected!";
-        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('connect-btn').style.display = 'none';
         sendConfig();
       };
       ws.onerror = () => document.getElementById('status').innerText = "❌ Connection failed";
@@ -265,34 +266,14 @@
     } catch(e) {
       document.getElementById('status').innerText = "❌ " + e.message;
     }
-
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission().then(r => {
-        if (r === 'granted') listenToTilt();
-      });
-    } else {
-      listenToTilt();
-    }
-  }
-
-  function listenToTilt() {
-    window.addEventListener('deviceorientation', (e) => {
-      if (ws && ws.readyState === 1) {
-        ws.send(JSON.stringify({
-          beta:  e.beta,
-          gamma: e.gamma,
-          keyMap,
-          threshold,
-        }));
-        document.getElementById('data').innerText =
-          `Pitch: ${e.beta?.toFixed(1)}°  Roll: ${e.gamma?.toFixed(1)}°`;
-      }
-    });
   }
 
   function sendConfig() {
     if (ws && ws.readyState === 1) {
       ws.send(JSON.stringify({ type: 'config', keyMap, threshold }));
+      const s = document.getElementById('send-status');
+      s.innerText = "✓ Config sent";
+      setTimeout(() => s.innerText = '', 1500);
     }
   }
 
@@ -308,7 +289,6 @@
     remapTarget = dir;
     document.getElementById('remap-dir-label').innerText = dir.toUpperCase();
 
-    // Build key grid
     const grid = document.getElementById('key-grid');
     grid.innerHTML = '';
     KEY_OPTIONS.forEach(k => {
