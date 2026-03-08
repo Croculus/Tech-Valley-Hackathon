@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #0f0;
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    h2 { font-size: 20px; margin-bottom: 4px; }
+    #status { font-size: 13px; color: #888; margin-bottom: 16px; }
+    #data   { font-size: 13px; color: #0af; margin-bottom: 20px; min-height: 20px; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #start-btn {
+      background: #0f0;
+      color: #111;
+      font-size: 20px;
+      padding: 20px;
+    }
+
+    /* REMAP SECTION */
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #555;
+      text-transform: uppercase;
+      margin: 24px 0 12px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 240px;
+      margin: 0 auto 20px;
+    }
+
+    .dpad-btn {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #0f0;
+      font-size: 22px;
+      padding: 18px 0;
+      cursor: pointer;
+      transition: background 0.1s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dpad-btn:active { background: #2a2a2a; }
+    .dpad-btn.selecting {
+      border-color: #0f0;
+      background: #1a2a1a;
+      box-shadow: 0 0 12px rgba(0,255,0,0.3);
+    }
+
+    .dpad-empty { background: transparent; border: none; }
+
+    .key-label {
+      font-size: 11px;
+      color: #0af;
+      font-family: monospace;
+    }
+
+    /* KEY PICKER MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal h3 {
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: #0f0;
+    }
+
+    .modal p { font-size: 13px; color: #888; }
+
+    .key-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .key-opt {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-family: monospace;
+      padding: 14px 0;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s;
+    }
+
+    .key-opt:active, .key-opt.selected {
+      background: #0f0;
+      color: #111;
+      border-color: #0f0;
+    }
+
+    .cancel-btn {
+      background: transparent;
+      border: 1px solid #555;
+      color: #888;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* THRESHOLD */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .slider-row label {
+      font-size: 13px;
+      color: #888;
+      width: 90px;
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: #0f0;
+    }
+
+    .slider-val {
+      font-family: monospace;
+      font-size: 13px;
+      color: #0f0;
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+  </style>
+  <script>
+  alert("test");
+  document.onerror = (e) => {
+    alert("Error: " + e.message);
+  };
+</script>
+</head>
+<body>
+
+  <h2>🎮 Head Tilt Controller</h2>
+  <p id="status">Tap START to connect</p>
+  <p id="data">--</p>
+
+  <button id="start-btn" class="btn" onclick="start()">START</button>
+
+  <!-- REMAP -->
+  <div class="section-title">Remap Directions</div>
+  <div class="dpad">
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-up"    onclick="openRemap('up')">
+      ▲ <span class="key-label" id="label-up">W</span>
+    </div>
+    <div class="dpad-empty"></div>
+
+    <div class="dpad-btn" id="btn-left"  onclick="openRemap('left')">
+      ◀ <span class="key-label" id="label-left">A</span>
+    </div>
+    <div class="dpad-empty" style="display:flex;align-items:center;justify-content:center;color:#333;font-size:20px">⊙</div>
+    <div class="dpad-btn" id="btn-right" onclick="openRemap('right')">
+      ▶ <span class="key-label" id="label-right">D</span>
+    </div>
+
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" id="btn-down"  onclick="openRemap('down')">
+      ▼ <span class="key-label" id="label-down">S</span>
+    </div>
+    <div class="dpad-empty"></div>
+  </div>
+
+  <!-- THRESHOLD SLIDER -->
+  <div class="section-title">Sensitivity</div>
+  <div class="slider-row">
+    <label>Tilt Angle</label>
+    <input type="range" min="5" max="45" value="12" id="thresh-slider"
+      oninput="updateThreshold(this.value)">
+    <span class="slider-val" id="thresh-val">12°</span>
+  </div>
+
+  <!-- REMAP MODAL -->
+  <div class="modal" id="remap-modal">
+    <h3>REMAP <span id="remap-dir-label">UP</span></h3>
+    <p>Choose a key to assign:</p>
+    <div class="key-grid" id="key-grid"></div>
+    <button class="cancel-btn" onclick="closeRemap()">Cancel</button>
+  </div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let ws;
+  const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+  let threshold = 12;
+  let remapTarget = null;
+
+  const KEY_OPTIONS = [
+    'w','a','s','d',
+    '↑','↓','←','→',
+    ' ','z','x','c',
+    '1','2','3','4',
+  ];
+
+  const KEY_SEND = {
+    '↑': 'ArrowUp', '↓': 'ArrowDown',
+    '←': 'ArrowLeft', '→': 'ArrowRight',
+    ' ': 'space',
+  };
+
+  // ── WebSocket ──────────────────────────────────────────────────────────────
+  function start() {
+    document.getElementById('status').innerText = "Connecting...";
+    try {
+      ws = new WebSocket("wss://10.90.111.57:8765");
+      ws.onopen  = () => {
+        document.getElementById('status').innerText = "✅ Connected!";
+        document.getElementById('start-btn').style.display = 'none';
+        sendConfig();
+      };
+      ws.onerror = () => document.getElementById('status').innerText = "❌ Connection failed";
+      ws.onclose = (e) => document.getElementById('status').innerText = `❌ Closed (${e.code})`;
+    } catch(e) {
+      document.getElementById('status').innerText = "❌ " + e.message;
+    }
+
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') listenToTilt();
+      });
+    } else {
+      listenToTilt();
+    }
+  }
+
+  function listenToTilt() {
+    window.addEventListener('deviceorientation', (e) => {
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify({
+          beta:  e.beta,
+          gamma: e.gamma,
+          keyMap,
+          threshold,
+        }));
+        document.getElementById('data').innerText =
+          `Pitch: ${e.beta?.toFixed(1)}°  Roll: ${e.gamma?.toFixed(1)}°`;
+      }
+    });
+  }
+
+  function sendConfig() {
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'config', keyMap, threshold }));
+    }
+  }
+
+  // ── Threshold ──────────────────────────────────────────────────────────────
+  function updateThreshold(val) {
+    threshold = +val;
+    document.getElementById('thresh-val').innerText = val + '°';
+    sendConfig();
+  }
+
+  // ── Remap ──────────────────────────────────────────────────────────────────
+  function openRemap(dir) {
+    remapTarget = dir;
+    document.getElementById('remap-dir-label').innerText = dir.toUpperCase();
+
+    // Build key grid
+    const grid = document.getElementById('key-grid');
+    grid.innerHTML = '';
+    KEY_OPTIONS.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'key-opt';
+      btn.textContent = k;
+      if ((KEY_SEND[k] || k) === keyMap[dir]) btn.classList.add('selected');
+      btn.onclick = () => assignKey(k);
+      grid.appendChild(btn);
+    });
+
+    document.getElementById('remap-modal').classList.add('open');
+    document.getElementById('btn-' + dir).classList.add('selecting');
+  }
+
+  function assignKey(k) {
+    const actual = KEY_SEND[k] || k;
+    keyMap[remapTarget] = actual;
+    document.getElementById('label-' + remapTarget).innerText = k.toUpperCase();
+    closeRemap();
+    sendConfig();
+  }
+
+  function closeRemap() {
+    document.getElementById('remap-modal').classList.remove('open');
+    if (remapTarget) document.getElementById('btn-' + remapTarget).classList.remove('selecting');
+    remapTarget = null;
+  }
+</script>
+</body>
+</html>
