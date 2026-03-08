@@ -14,7 +14,6 @@ Usage:
   3. Say "type mode" or "command mode" to switch, then speak
   4. Say "stop listening" to pause, "start listening" to resume
 """
-
 import os
 import io
 import time
@@ -72,7 +71,7 @@ COMMAND_MAP = {
 }
 
 # ── State ──────────────────────────────────────────────────────────────────────
-mode      = "type"  # "type" or "command"
+mode      = "command"  # "type" or "command"
 listening = True
 
 
@@ -100,7 +99,7 @@ def record_utterance() -> bytes | None:
         for _ in range(max_chunks):
             chunk, _ = stream.read(chunk_samples)  # blocks until samples are ready
             rms  = (chunk.flatten().astype(np.float32) ** 2).mean() ** 0.5 / 32768
-            print('chunk max: {}, chunk min: {}, rms: {}'.format(chunk.max(), chunk.min(), rms))
+            #print('chunk max: {}, chunk min: {}, rms: {}'.format(chunk.max(), chunk.min(), rms))
             #print("device {}".format(sd.default.device))
             is_speech = rms > SILENCE_THRESHOLD
 
@@ -140,7 +139,7 @@ def transcribe(audio_bytes: bytes) -> str:
         )
         return (result.text or "").strip().lower()
     except Exception as e:
-        print(f"[yeah. hello? is it possible  Error] {e}")
+        print(f"[Error] {e}")
         return ""
 
 
