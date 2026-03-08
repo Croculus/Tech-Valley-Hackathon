@@ -151,7 +151,7 @@ async def esp_poll_loop():
                 release(config["esp_key"])
         except Exception as e:
             print(f"  esp error: {e}")
-        await asyncio.sleep(0.2)  # poll every
+        await asyncio.sleep(0.05)  # poll every
 
 # ── WebSocket handler ──────────────────────────────────────────────────────────
 

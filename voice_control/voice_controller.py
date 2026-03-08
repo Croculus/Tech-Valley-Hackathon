@@ -180,7 +180,6 @@ def main(commands_mapping: dict):
 
         audio = record_utterance()
         if audio is None:
-            print("found none audio")
             continue  # no speech detected — skip API call
 
         text = transcribe(audio)
