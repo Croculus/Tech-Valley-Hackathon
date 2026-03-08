@@ -1,52 +1,96 @@
-import asyncio, websockets, pyautogui, json, ssl
-from aiohttp import web
+import asyncio
+import websockets
+import pyautogui
+import json
+import ssl
+import os
+
+PHONE_PORT = 8765
+
+config = {
+    "threshold": 12,
+    "keyMap": {"up": "w", "down": "s", "left": "a", "right": "d"},
+}
+
+ARROW_FIX = {
+    "ArrowUp": "up", "ArrowDown": "down",
+    "ArrowLeft": "left", "ArrowRight": "right",
+}
 
 pyautogui.PAUSE = 0
-pressed = set()
+pressed_keys = set()
+
+def fix_key(k):
+    return ARROW_FIX.get(k, k)
 
 def press(key):
-    if key not in pressed:
-        pyautogui.keyDown(key); pressed.add(key)
+    key = fix_key(key)
+    if key not in pressed_keys:
+        try:
+            pyautogui.keyDown(key)
+            pressed_keys.add(key)
+            print(f"  ↓ {key.upper()}")
+        except Exception as e:
+            print(f"  key error: {e}")
 
 def release(key):
-    if key in pressed:
-        pyautogui.keyUp(key); pressed.discard(key)
+    key = fix_key(key)
+    if key in pressed_keys:
+        pyautogui.keyUp(key)
+        pressed_keys.discard(key)
 
-async def handler(ws):
-    print("Phone connected!")
-    async for msg in ws:
-        data = json.loads(msg)
-        pitch = data.get('beta', 0)
-        roll  = data.get('gamma', 0)
-        T = 12
-        if pitch > T:   press("down")
-        else:           release("down")
-        if pitch < -T:  press("up")
-        else:           release("up")
-        if roll < -T:   press("left")
-        else:           release("left")
-        if roll > T:    press("right")
-        else:           release("right")
+def release_all():
+    for key in list(pressed_keys):
+        pyautogui.keyUp(fix_key(key))
+    pressed_keys.clear()
 
-async def dummy_http(request):
-    return web.Response(text="OK - cert trusted!")
+def handle_tilt(pitch, roll):
+    T  = config["threshold"]
+    km = config["keyMap"]
+    if pitch > T:
+        press(km["up"]);    release(km["down"]); release(km["left"]); release(km["right"])
+    elif pitch < -T:
+        press(km["down"]);  release(km["up"]);   release(km["left"]); release(km["right"])
+    elif roll < -T:
+        press(km["left"]);  release(km["right"]); release(km["up"]); release(km["down"])
+    elif roll > T:
+        press(km["right"]); release(km["left"]);  release(km["up"]); release(km["down"])
+    else:
+        release_all()
+
+async def phone_handler(ws):
+    print("📱 iPhone connected!")
+    try:
+        async for msg in ws:
+            data = json.loads(msg)
+
+            if data.get("type") == "config":
+                if "keyMap"    in data: config["keyMap"]    = data["keyMap"];    print(f"⌨️  Keys: {config['keyMap']}")
+                if "threshold" in data: config["threshold"] = data["threshold"]; print(f"📐 Threshold: {config['threshold']}°")
+                continue
+
+            if "keyMap"    in data: config["keyMap"]    = data["keyMap"]
+            if "threshold" in data: config["threshold"] = data["threshold"]
+
+            handle_tilt(data.get("beta", 0), data.get("gamma", 0))
+
+    except websockets.ConnectionClosed:
+        print("📱 iPhone disconnected")
+        release_all()
 
 async def main():
-    ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    ssl_ctx.load_cert_chain('cert.pem', 'key.pem')
+    ssl_ctx = None
+    if os.path.exists("cert.pem") and os.path.exists("key.pem"):
+        ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_ctx.load_cert_chain("cert.pem", "key.pem")
+        print("🔒 SSL enabled (wss://)")
+    else:
+        print("⚠️  No cert.pem/key.pem found!")
 
-    # Dummy HTTP page so iPhone can trust the cert
-    app = web.Application()
-    app.router.add_get('/', dummy_http)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8766, ssl_context=ssl_ctx)
-    await site.start()
-    print("Visit https://10.90.221.253:8766 on iPhone to trust cert")
-
-    # Actual WebSocket server
-    print("Waiting for phone...")
-    async with websockets.serve(handler, "0.0.0.0", 8765, ssl=ssl_ctx):
+    async with websockets.serve(phone_handler, "0.0.0.0", PHONE_PORT, ssl=ssl_ctx):
+        print(f"✅ Tilt server running on port {PHONE_PORT}")
+        print(f"   Threshold: {config['threshold']}°  |  Keys: {config['keyMap']}")
+        print("   Alt-tab into your game and tilt!\n")
         await asyncio.Future()
 
 asyncio.run(main())
