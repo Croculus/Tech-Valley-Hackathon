@@ -31,18 +31,22 @@ python voice_controller.py
 ```
 
 ## Voice Commands
-| Say              | Action                        |
-|------------------|-------------------------------|
-| "type mode"      | Switch to dictation mode      |
-| "command mode"   | Switch to game command mode   |
-| "stop listening" | Pause voice input             |
-| "start listening"| Resume voice input            |
-| "jump"           | Press Space                   |
-| "reload"         | Press R                       |
-| "ability one"    | Press Q                       |
-| "ultimate"       | Press R (hold)                |
-| "click"          | Left mouse click              |
+| Say                        | Action                                          |
+|----------------------------|-------------------------------------------------|
+| "type mode"               | Switch to dictation mode                        |
+| "command mode"            | Switch to game command mode                     |
+| "stop listening"          | Pause voice input                               |
+| "start listening"         | Resume voice input                              |
+| "use action"              | Press the current *action button* key           |
+| "set action to <key>"     | Change which key is treated as the action button |
+| "jump"                    | Press Space                                     |
+| "reload"                  | Press R                                         |
+| "ability one"             | Press Q                                         |
+| "ultimate"                | Press R (hold)                                  |
+| "click"                   | Left mouse click                                |
 | ... (see COMMAND_MAP in voice_controller.py for full list)
+
+The chosen action button is also shown in the tilt controller web UI (`iPhone_IMU/controller.html`) and in server logs.
 
 ## Tuning the headband sensitivity
 Edit these values in headband_mouse.ino:
