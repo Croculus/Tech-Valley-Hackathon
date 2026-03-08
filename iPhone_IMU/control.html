@@ -81,6 +81,73 @@
       font-family: monospace;
     }
 
+    /* ACTION BUTTONS */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 300px;
+      margin: 0 auto 10px;
+    }
+
+    .action-btn {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #0f0;
+      font-size: 14px;
+      font-weight: bold;
+      padding: 14px 0 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.1s;
+    }
+
+    .action-btn:active { background: #2a2a2a; }
+    .action-btn.selecting {
+      border-color: #0f0;
+      background: #1a2a1a;
+      box-shadow: 0 0 12px rgba(0,255,0,0.3);
+    }
+
+    /* SENSOR ROW */
+    .sensor-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 300px;
+      margin: 0 auto 8px;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .sensor-row:active { background: #2a2a2a; }
+    .sensor-row.selecting {
+      border-color: #fa0;
+      background: #1a1800;
+      box-shadow: 0 0 12px rgba(255,170,0,0.3);
+    }
+
+    .sensor-label {
+      font-size: 13px;
+      color: #fa0;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .sensor-key-label {
+      font-size: 11px;
+      color: #0af;
+      font-family: monospace;
+    }
+
     /* MODAL */
     .modal {
       display: none;
@@ -103,6 +170,7 @@
       color: #0f0;
     }
 
+    .modal h3.sensor-title { color: #fa0; }
     .modal p { font-size: 13px; color: #888; }
 
     .key-grid {
@@ -113,14 +181,22 @@
       max-width: 320px;
     }
 
+    .action-key-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 300px;
+    }
+
     .key-opt {
       background: #1a1a1a;
       border: 1px solid #333;
       border-radius: 8px;
       color: #fff;
-      font-size: 15px;
+      font-size: 13px;
       font-family: monospace;
-      padding: 14px 0;
+      padding: 14px 4px;
       cursor: pointer;
       text-align: center;
       transition: all 0.1s;
@@ -130,6 +206,12 @@
       background: #0f0;
       color: #111;
       border-color: #0f0;
+    }
+
+    .key-opt.sensor-opt:active, .key-opt.sensor-opt.selected {
+      background: #fa0;
+      color: #111;
+      border-color: #fa0;
     }
 
     .cancel-btn {
@@ -188,16 +270,16 @@
 
   <button id="connect-btn" class="btn" onclick="connect()">CONNECT</button>
 
-  <!-- REMAP -->
+  <!-- REMAP DIRECTIONS -->
   <div class="section-title">Remap Directions</div>
   <div class="dpad">
     <div class="dpad-empty"></div>
-    <div class="dpad-btn" id="btn-up"    onclick="openRemap('up')">
+    <div class="dpad-btn" id="btn-up" onclick="openRemap('up')">
       ▲ <span class="key-label" id="label-up">W</span>
     </div>
     <div class="dpad-empty"></div>
 
-    <div class="dpad-btn" id="btn-left"  onclick="openRemap('left')">
+    <div class="dpad-btn" id="btn-left" onclick="openRemap('left')">
       ◀ <span class="key-label" id="label-left">A</span>
     </div>
     <div class="dpad-empty" style="display:flex;align-items:center;justify-content:center;color:#333;font-size:20px">⊙</div>
@@ -206,10 +288,38 @@
     </div>
 
     <div class="dpad-empty"></div>
-    <div class="dpad-btn" id="btn-down"  onclick="openRemap('down')">
+    <div class="dpad-btn" id="btn-down" onclick="openRemap('down')">
       ▼ <span class="key-label" id="label-down">S</span>
     </div>
     <div class="dpad-empty"></div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="section-title">Action Buttons</div>
+  <div class="action-grid">
+    <div class="action-btn" id="abtn-jump" onclick="openActionRemap('jump')">
+      🦘 JUMP
+      <span class="key-label" id="alabel-jump">SPACE</span>
+    </div>
+    <div class="action-btn" id="abtn-go" onclick="openActionRemap('go')">
+      🟢 GO
+      <span class="key-label" id="alabel-go">ENTER</span>
+    </div>
+    <div class="action-btn" id="abtn-run" onclick="openActionRemap('run')">
+      ⚡ RUN
+      <span class="key-label" id="alabel-run">SHIFT</span>
+    </div>
+    <div class="action-btn" id="abtn-click" onclick="openActionRemap('click')">
+      🖱️ CLICK
+      <span class="key-label" id="alabel-click">CLICK</span>
+    </div>
+  </div>
+
+  <!-- SENSOR -->
+  <div class="section-title">Sensor (ESP)</div>
+  <div class="sensor-row" id="abtn-sensor" onclick="openActionRemap('sensor')">
+    <span class="sensor-label">⚡ SENSOR TRIGGER</span>
+    <span class="sensor-key-label" id="alabel-sensor">C</span>
   </div>
 
   <!-- THRESHOLD -->
@@ -223,7 +333,7 @@
 
   <p id="send-status"></p>
 
-  <!-- REMAP MODAL -->
+  <!-- DIRECTION REMAP MODAL -->
   <div class="modal" id="remap-modal">
     <h3>REMAP <span id="remap-dir-label">UP</span></h3>
     <p>Choose a key to assign:</p>
@@ -231,12 +341,22 @@
     <button class="cancel-btn" onclick="closeRemap()">Cancel</button>
   </div>
 
+  <!-- ACTION REMAP MODAL -->
+  <div class="modal" id="action-modal">
+    <h3 id="action-modal-title">REMAP JUMP</h3>
+    <p>Choose an action to assign:</p>
+    <div class="action-key-grid" id="action-key-grid"></div>
+    <button class="cancel-btn" onclick="closeActionRemap()">Cancel</button>
+  </div>
+
 <script>
   const WS_URL = "wss://10.90.111.57:8765";
   let ws;
-  const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+  const keyMap    = { up: 'w', down: 's', left: 'a', right: 'd' };
+  const actionMap = { jump: 'space', go: 'enter', run: 'shift', click: 'click', sensor: 'c' };
   let threshold = 12;
   let remapTarget = null;
+  let actionRemapTarget = null;
 
   const KEY_OPTIONS = [
     'w','a','s','d',
@@ -250,6 +370,15 @@
     '←': 'ArrowLeft', '→': 'ArrowRight',
     ' ': 'space',
   };
+
+  const ACTION_OPTIONS = [
+    { label: 'click',     value: 'click'     },
+    { label: 'enter',     value: 'enter'     },
+    { label: 'space',     value: 'space'     },
+    { label: 'escape',    value: 'escape'    },
+    { label: 'backspace', value: 'backspace' },
+    { label: 'shift',     value: 'shift'     },
+  ];
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
   function connect() {
@@ -270,7 +399,13 @@
 
   function sendConfig() {
     if (ws && ws.readyState === 1) {
-      ws.send(JSON.stringify({ type: 'config', keyMap, threshold }));
+      ws.send(JSON.stringify({
+        type:      'config',
+        keyMap,
+        threshold,
+        actionMap,
+        esp_key:   actionMap.sensor,
+      }));
       const s = document.getElementById('send-status');
       s.innerText = "✓ Config sent";
       setTimeout(() => s.innerText = '', 1500);
@@ -284,7 +419,7 @@
     sendConfig();
   }
 
-  // ── Remap ──────────────────────────────────────────────────────────────────
+  // ── Direction Remap ────────────────────────────────────────────────────────
   function openRemap(dir) {
     remapTarget = dir;
     document.getElementById('remap-dir-label').innerText = dir.toUpperCase();
@@ -316,6 +451,45 @@
     document.getElementById('remap-modal').classList.remove('open');
     if (remapTarget) document.getElementById('btn-' + remapTarget).classList.remove('selecting');
     remapTarget = null;
+  }
+
+  // ── Action Remap ───────────────────────────────────────────────────────────
+  function openActionRemap(action) {
+    actionRemapTarget = action;
+    const isSensor = action === 'sensor';
+
+    const title = document.getElementById('action-modal-title');
+    title.textContent = 'REMAP ' + action.toUpperCase();
+    title.className = isSensor ? 'sensor-title' : '';
+
+    const grid = document.getElementById('action-key-grid');
+    grid.innerHTML = '';
+    ACTION_OPTIONS.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'key-opt' + (isSensor ? ' sensor-opt' : '');
+      btn.textContent = opt.label;
+      if (opt.value === actionMap[action]) btn.classList.add('selected');
+      btn.onclick = () => assignActionKey(opt.value, opt.label);
+      grid.appendChild(btn);
+    });
+
+    document.getElementById('action-modal').classList.add('open');
+    document.getElementById('abtn-' + action).classList.add('selecting');
+  }
+
+  function assignActionKey(value, label) {
+    actionMap[actionRemapTarget] = value;
+    document.getElementById('alabel-' + actionRemapTarget).innerText = label.toUpperCase();
+    closeActionRemap();
+    sendConfig();
+  }
+
+  function closeActionRemap() {
+    document.getElementById('action-modal').classList.remove('open');
+    if (actionRemapTarget) {
+      document.getElementById('abtn-' + actionRemapTarget).classList.remove('selecting');
+    }
+    actionRemapTarget = null;
   }
 </script>
 </body>

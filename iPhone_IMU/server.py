@@ -1,4 +1,4 @@
-# pip install elevenlabs pyautogui sounddevice scipy numpy python-dotenv pyopenssl pyserial flask
+# pip install elevenlabs pyautogui sounddevice scipy numpy python-dotenv pyopenssl serial flask
 
 import asyncio
 import websockets
@@ -77,13 +77,14 @@ async def esp_poll_loop():
     while True:
         try:
             value = esp.get_data()
-            if value < config["esp_threshold"]:
+            print(value)
+            if (value >= 0) and (value < config["esp_threshold"]):
                 press(config["esp_key"])
             else:
                 release(config["esp_key"])
         except Exception as e:
             print(f"  esp error: {e}")
-        await asyncio.sleep(0.05)  # poll every 50ms
+        await asyncio.sleep(0.2)  # poll every
 
 # ── WebSocket handler ──────────────────────────────────────────────────────────
 

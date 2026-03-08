@@ -11,13 +11,14 @@ class EspInput:
             self.esp_serial.readline()
 
     def get_data(self, retry = 10) -> float:
+        self.esp_serial.reset_input_buffer()
         for i in range(retry):
             try:
                 msg = self.esp_serial.readline()
                 msg = msg.decode().strip()
                 return float(msg)
             except Exception as e:
-                # print("error", i)
+                print(" esp_error", i)
                 pass
         return -2 # error
 
