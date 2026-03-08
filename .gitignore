@@ -1,2 +1,3 @@
-
 headband_mouse/ESP32-BLE-Mouse.zip
+__pycache__/
+venv/
