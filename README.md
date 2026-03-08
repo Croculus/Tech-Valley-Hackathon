@@ -117,7 +117,7 @@ python server.py
 python host.py
 ```
 
-On your **iPhone**, open Safari and go to:
+On your **Phone**, open Safari and go to:
 ```
 https://YOUR_LOCAL_IP:5000
 ```
@@ -127,7 +127,7 @@ Accept the security warning (expected for self-signed cert), then tap **START**.
 
 ---
 
-## Using the iPhone Controller UI
+## Using the Phone Controller UI
 
 Once connected, the iPhone page gives you:
 
@@ -179,24 +179,10 @@ Format: `"spoken phrase": ("key_to_press", duration_in_seconds)`
 
 ## Running the Unified Server (All Inputs Together)
 
-```bash
-python unified_server.py
-```
-
-| Port | Purpose |
-|------|---------|
-| `8765` | iPhone IMU WebSocket |
-| `8766` | Browser dashboard WebSocket |
-| `8767` | ESP32 ultrasonic WebSocket |
-
 The ESP32 should send JSON over WebSocket:
 ```json
 {"distance": 42.5}
 ```
-
-Open `dashboard.html` in your browser to monitor all inputs, calibrate, and remap.
-
----
 
 ## Wiring Reference
 
@@ -251,7 +237,7 @@ Open `dashboard.html` in your browser to monitor all inputs, calibrate, and rema
 
 ## Troubleshooting
 
-**`❌ Connection failed` on iPhone**
+**`❌ Connection failed` on Phone**
 - Make sure phone and PC are on the same WiFi network
 - Verify your IP address hasn't changed (`ipconfig`)
 - Visit `https://YOUR_IP:8765` in Safari and accept the cert warning
