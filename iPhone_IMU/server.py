@@ -4,6 +4,11 @@ import pyautogui
 import json
 import ssl
 import os
+import sys
+import threading 
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from voice_control import voice_controller
 
 PHONE_PORT = 8765
 
@@ -87,6 +92,12 @@ async def main():
     else:
         print("⚠️  No cert.pem/key.pem found!")
 
+    # Run voice_controller in a separate thread
+    voice_thread = threading.Thread(target=voice_controller.main, daemon=True)
+    voice_thread.start()
+    print("🎤 Voice controller started in background thread")
+    
+        
     async with websockets.serve(phone_handler, "0.0.0.0", PHONE_PORT, ssl=ssl_ctx):
         print(f"✅ Tilt server running on port {PHONE_PORT}")
         print(f"   Threshold: {config['threshold']}°  |  Keys: {config['keyMap']}")
