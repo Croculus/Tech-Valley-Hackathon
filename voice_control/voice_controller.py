@@ -30,7 +30,7 @@ load_dotenv()
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 SAMPLE_RATE        = 16000  # Hz — ElevenLabs accepts 16kHz mono
 CHUNK_SECONDS      = 0.3    # VAD polling interval — 300ms avoids Windows WASAPI minimum buffer rejection
-SILENCE_THRESHOLD  = 0.08 # RMS below this → silence
+SILENCE_THRESHOLD  = 0.01 # RMS below this → silence
 SILENCE_TIMEOUT    = 0.6    # seconds of silence that ends an utterance
 MAX_RECORD_SECONDS = 15.0   # hard cap to prevent runaway recordings
 
@@ -40,40 +40,13 @@ if not ELEVENLABS_API_KEY:
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
 # ── Game command map ───────────────────────────────────────────────────────────
-COMMAND_MAP = {
-    # Movement
-    "move forward":    ("w",                0.5),
-    "move back":       ("s",                0.5),
-    "move left":       ("a",                0.5),
-    "move right":      ("d",                0.5),
-    # Actions
-    "jump":            ("space",            0.05),
-    "crouch":          ("ctrl",             0.05),
-    "sprint":          ("shift",            0.05),
-    "reload":          ("r",                0.05),
-    "interact":        ("e",                0.05),
-    "inventory":       ("i",                0.05),
-    "map":             ("m",                0.05),
-    "pause":           ("escape",           0.05),
-    # Abilities
-    "ability one":     ("q",                0.05),
-    "ability two":     ("w",                0.05),
-    "ability three":   ("e",                0.05),
-    "ultimate":        ("r",                0.05),
-    # Mouse
-    "click":           ("click",            0),
-    "right click":     ("right_click",      0),
-    # Control
-    "type mode":       ("__mode_type__",    0),
-    "command mode":    ("__mode_command__", 0),
-    "stop listening":  ("__pause__",        0),
-    "start listening": ("__resume__",       0),
-}
+# moved to server.py
 
 # ── State ──────────────────────────────────────────────────────────────────────
 mode      = "command"  # "type" or "command"
 listening = True
 
+print("device {}".format(sd.default.device))
 
 # ── Audio capture with VAD ─────────────────────────────────────────────────────
 def record_utterance() -> bytes | None:
@@ -99,8 +72,7 @@ def record_utterance() -> bytes | None:
         for _ in range(max_chunks):
             chunk, _ = stream.read(chunk_samples)  # blocks until samples are ready
             rms  = (chunk.flatten().astype(np.float32) ** 2).mean() ** 0.5 / 32768
-            #print('chunk max: {}, chunk min: {}, rms: {}'.format(chunk.max(), chunk.min(), rms))
-            #print("device {}".format(sd.default.device))
+            # print('chunk max: {}, chunk min: {}, rms: {}'.format(chunk.max(), chunk.min(), rms))
             is_speech = rms > SILENCE_THRESHOLD
 
             if not speech_started:
@@ -144,9 +116,9 @@ def transcribe(audio_bytes: bytes) -> str:
 
 
 # ── Command / type handlers ────────────────────────────────────────────────────
-def handle_command(text: str):
+def handle_command(text: str, commands_map: dict):
     global mode, listening
-    for phrase, (action, duration) in COMMAND_MAP.items():
+    for phrase, (action, duration) in commands_map.items():
         if phrase in text:
             print(f"[CMD] '{phrase}' → {action}")
             if action == "__mode_type__":
@@ -159,8 +131,18 @@ def handle_command(text: str):
                 listening = True;  print("[RESUMED]")
             elif action == "click":
                 pyautogui.click()
-            elif action == "right_click":
-                pyautogui.rightClick()
+            # elif action == "right_click":
+            #     pyautogui.rightClick()
+            elif action == "enter":
+                pyautogui.press("enter")
+            elif action == "space":
+                pyautogui.press("space")
+            elif action == "escape":
+                pyautogui.press("escape")
+            elif action == "backspace":
+                pyautogui.press("backspace")
+            elif action == "shift":
+                pyautogui.press("shift")
             else:
                 pyautogui.keyDown(action)
                 time.sleep(duration)
@@ -176,7 +158,7 @@ def handle_type(text: str):
 
 
 # ── Main loop ──────────────────────────────────────────────────────────────────
-def main():
+def main(commands_mapping: dict):
     global listening, mode
 
     print("=" * 50)
@@ -198,19 +180,21 @@ def main():
 
         audio = record_utterance()
         if audio is None:
+            print("found none audio")
             continue  # no speech detected — skip API call
 
         text = transcribe(audio)
         if not text:
+            print("transcribe returned empty text, skipping")
             continue
 
         print(f"[HEARD] {text}")
 
         # Control commands always fire regardless of mode
         if any(cmd in text for cmd in ["type mode", "command mode", "stop listening", "start listening"]):
-            handle_command(text)
+            handle_command(text, commands_mapping)
         elif mode == "command":
-            handle_command(text)
+            handle_command(text, commands_mapping)
         elif mode == "type":
             handle_type(text)
 
